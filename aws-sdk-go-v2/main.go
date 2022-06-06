@@ -14,7 +14,7 @@ import (
 
 func main() {
 	r2EndpointResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		return aws.Endpoint{URL: os.Getenv("R2_ENDPOINT"), SigningRegion: "auto"}, nil
+		return aws.Endpoint{URL: fmt.Sprintf("https://%s.r2.cloudflarestorage.com", os.Getenv("R2_ACCOUNT_ID")), SigningRegion: "auto"}, nil
 	})
 
 	accessKeyId := os.Getenv("R2_ACCESS_KEY_ID")
@@ -24,8 +24,7 @@ func main() {
 		context.Background(),
 		config.WithRegion("auto"),
 		config.WithEndpointResolverWithOptions(r2EndpointResolver),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyId, secretAccessKey, "")),
-		config.WithClientLogMode(aws.LogRetries|aws.LogRequest|aws.LogSigning))
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyId, secretAccessKey, "")))
 	if err != nil {
 		panic(err)
 	}
@@ -37,6 +36,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("response: %#v", resp)
-
+	for _, bucket := range resp.Buckets {
+		fmt.Printf("%s\n", *bucket.Name)
+	}
 }
